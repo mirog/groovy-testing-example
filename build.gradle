@@ -1,0 +1,69 @@
+apply plugin: "groovy"
+apply plugin: 'idea'
+apply plugin: 'spring-boot'
+
+apply from: 'gebish.gradle'
+
+mainClassName = 'myapp.Application'
+
+ext {
+    groovyVersion = '2.4.1'
+    spockVersion = '0.7-groovy-2.0'
+    wiremockVersion = '1.53'
+    cglibVersion = '3.1'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.3'
+    distributionUrl = 'http://services.gradle.org/distributions/gradle-2.3-all.zip'
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'org.springframework.boot', name: 'spring-boot-gradle-plugin', version: '1.2.1.RELEASE'
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+jar {
+    baseName = 'groovy-weather'
+    version =  '0.1.0'
+}
+
+dependencies {
+    compile     group: 'org.springframework.boot',  name: 'spring-boot-starter-thymeleaf'
+    compile     group: 'org.springframework.boot',  name: 'spring-boot-starter-actuator'
+    compile     group: 'org.springframework.boot',  name: 'spring-boot-starter-security'
+    compile     group: 'org.springframework.boot',  name: 'spring-boot-starter-undertow'
+    compile     group: 'org.springframework',       name: 'spring-web'
+    compile     group: 'org.codehaus.groovy',       name: 'groovy-all',                 version: groovyVersion
+
+    testCompile group: 'org.springframework.boot',  name: 'spring-boot-starter-test'
+    testCompile group: 'org.springframework',       name: 'spring-context'
+    testCompile group: 'org.spockframework',        name: 'spock-core',                 version: spockVersion
+    testCompile group: 'org.spockframework',        name: 'spock-spring',               version: spockVersion
+    testCompile group: 'com.github.tomakehurst',    name: 'wiremock',                   version: wiremockVersion
+    testCompile group: 'cglib',                     name: 'cglib-nodep',                version: cglibVersion
+
+}
+
+sourceSets {
+    integrationTest {
+        compileClasspath = sourceSets.main.output + configurations.testRuntime
+        runtimeClasspath = output + sourceSets.main.output + configurations.testRuntime
+        groovy {
+            srcDir 'src/integration/groovy'
+        }
+    }
+}
+
+task integrationTest(type: Test) {
+    testClassesDir = sourceSets.integrationTest.output.classesDir
+    classpath = sourceSets.integrationTest.runtimeClasspath
+}

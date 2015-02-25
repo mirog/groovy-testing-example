@@ -1,0 +1,87 @@
+// Based on https://github.com/geb/geb-example-gradle
+
+import org.apache.tools.ant.taskdefs.condition.Os
+
+ext {
+    drivers = ["firefox", "chrome", "phantomJs"]
+    gebVersion = '0.10.0'
+    seleniumVersion = '2.43.1'
+    chromeDriverVersion = '2.10'
+    phantomjsDriverVersion = '1.2.0'
+    phantomJsVersion = '1.9.8'
+}
+
+apply from: "gradle/idea.gradle"
+apply from: "gradle/osSpecificDownloads.gradle"
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    testCompile group: 'org.gebish',                    name: 'geb-core',                   version: gebVersion
+    testCompile group: 'org.gebish',                    name: 'geb-spock',                  version: gebVersion
+    testCompile group: 'org.seleniumhq.selenium',       name: 'selenium-java',              version: seleniumVersion
+    testCompile group: 'org.seleniumhq.selenium',       name: 'selenium-chrome-driver',     version: seleniumVersion
+    testCompile group: 'org.seleniumhq.selenium',       name: 'selenium-firefox-driver',    version: seleniumVersion
+    testCompile group: 'org.seleniumhq.selenium',       name: 'selenium-support',           version: seleniumVersion
+    testCompile(group: 'com.github.detro',              name: 'phantomjsdriver',            version: phantomjsDriverVersion) {
+        // phantomjs driver pulls in a different selenium version
+        transitive = false
+    }
+}
+
+sourceSets {
+    automationTest {
+        compileClasspath = sourceSets.main.output + configurations.testRuntime
+        runtimeClasspath = output + sourceSets.main.output + configurations.testRuntime
+        groovy {
+            srcDir 'src/automation/groovy'
+        }
+    }
+    main {
+        resources {
+            srcDir 'src/automation/resources'
+        }
+    }
+}
+
+drivers.each { driver ->
+    task "${driver}AutomationTest"(type: Test) {
+        reports {
+            html.destination = reporting.file("$name/tests")
+            junitXml.destination = file("$buildDir/test-results/$name")
+        }
+
+        outputs.upToDateWhen { false }  // Always run tests
+
+        systemProperty "geb.build.reportsDir", reporting.file("$name/geb")
+        systemProperty "geb.env", driver
+
+        testClassesDir = sourceSets.automationTest.output.classesDir
+        classpath = sourceSets.automationTest.runtimeClasspath
+
+        // If you wanted to set the baseUrl in your build…
+        // systemProperty "geb.build.baseUrl", "http://myapp.com"
+    }
+}
+
+chromeAutomationTest {
+    dependsOn unzipChromeDriver
+
+    def chromedriverFilename = Os.isFamily(Os.FAMILY_WINDOWS) ? "chromedriver.exe" : "chromedriver"
+    systemProperty "webdriver.chrome.driver", new File(unzipChromeDriver.outputs.files.singleFile, chromedriverFilename).absolutePath
+}
+
+phantomJsAutomationTest {
+    dependsOn unzipPhantomJs
+
+    def phantomJsFilename = Os.isFamily(Os.FAMILY_WINDOWS) ? "phantomjs.exe" : "bin/phantomjs"
+    systemProperty "phantomjs.binary.path", new File(unzipPhantomJs.outputs.files.singleFile, phantomJsFilename).absolutePath
+}
+
+task automationTest {
+    dependsOn {
+        tasks.findAll { task -> task.name.endsWith('AutomationTest') }
+    }
+}

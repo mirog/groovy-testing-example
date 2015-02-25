@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:include="fragments/head :: header('Weather page')">
+</head>
+<body>
+    <div class="container">
+        <div th:include="fragments/menu :: bar"></div>
+        <div th:if="${error}">
+            <p th:text="${error}"></p>
+        </div>
+        <div th:unless="${error}">
+            <h1>Weather for <span th:text="${name}"></span></h1>
+            <p>It is <span th:text="${data.weather} + ' and ' + ${data.temperature}"></span>!</p>
+        </div>
+    </div>
+</body>
+</html>

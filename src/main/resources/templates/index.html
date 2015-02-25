@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:include="fragments/head :: header('Main page')">
+</head>
+<body>
+    <div class="container">
+        <div th:include="fragments/menu :: bar"></div>
+        <h1>Hi <span th:text="${name}">there</span>!</h1>
+        <h3>Welcome to our weather service.</h3>
+    </div>
+</body>
+</html>
